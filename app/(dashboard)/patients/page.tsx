@@ -135,7 +135,7 @@ export default async function PatientsPage() {
                 className="card p-4 hover:shadow-lg transition-all hover:-translate-y-1"
               >
                 <div className="flex items-start space-x-4">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-400 to-teal-500 flex items-center justify-center text-white font-semibold text-xl shadow-glow shrink-0">
+                  <div className="w-14 h-14 rounded-2xl bg-linear-to-br from-primary-400 to-teal-500 flex items-center justify-center text-white font-semibold text-xl shadow-glow shrink-0">
                     {patient.name.charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
