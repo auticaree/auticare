@@ -1,10 +1,10 @@
 /**
  * Email service for AutiCare
  * Handles transactional emails (invitations, notifications, password reset)
- * 
- * For pilot: uses console logging as fallback when SMTP not configured.
- * Production: integrate with SendGrid, Resend, or similar.
+ * Uses Resend for production email delivery
  */
+
+import { Resend } from 'resend';
 
 interface EmailOptions {
   to: string;
@@ -22,30 +22,35 @@ interface InviteEmailData {
   expiresAt: Date;
 }
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.AUTH_URL || "http://localhost:3000";
+
+// Initialize Resend client
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 /**
- * Send an email using configured transport
- * Falls back to console logging for pilot/dev environments
+ * Send an email using Resend
+ * Falls back to console logging when API key not configured
  */
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
   const { to, subject, text, html } = options;
 
-  // Check if SMTP is configured
-  const smtpHost = process.env.SMTP_HOST;
-  const smtpUser = process.env.SMTP_USER;
-  const smtpPass = process.env.SMTP_PASS;
-
-  if (smtpHost && smtpUser && smtpPass) {
-    // Production: Use nodemailer or API-based email service
+  // Use Resend if configured
+  if (resend) {
     try {
-      // For now, we'll use a simple fetch to a transactional email API
-      // This can be replaced with nodemailer, Resend, SendGrid, etc.
-      console.log(`[Email] Sending to ${to}: ${subject}`);
+      const { error } = await resend.emails.send({
+        from: 'AutiCare <onboarding@resend.dev>',
+        to: [to],
+        subject,
+        text,
+        html: html || undefined,
+      });
 
-      // Placeholder for actual email sending
-      // await transporter.sendMail({ from, to, subject, text, html });
+      if (error) {
+        console.error("[Email] Resend error:", error);
+        return false;
+      }
 
+      console.log(`[Email] Sent to ${to}: ${subject}`);
       return true;
     } catch (error) {
       console.error("[Email] Failed to send:", error);
