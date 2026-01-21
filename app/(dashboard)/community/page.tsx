@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { FeedbackForm } from "./feedback-form";
 
 export default async function CommunityPage() {
   const session = await auth();
@@ -187,10 +188,7 @@ export default async function CommunityPage() {
                   As a pilot user, your input helps shape the future of AutiCare.
                   Let us know what features you'd like to see!
                 </p>
-                <button className="btn-primary">
-                  <span className="material-symbols-rounded mr-2">edit_note</span>
-                  Share Feedback
-                </button>
+                <FeedbackForm />
               </div>
             </div>
           </div>
