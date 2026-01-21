@@ -1,0 +1,391 @@
+/* Inter Variable Font - Loaded via Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@import "tailwindcss";
+
+/* Tailwind v4 Theme Configuration */
+@theme {
+  /* Primary colors - Calm Tech palette from DESIGN.md */
+  --color-primary: #17cfb0;
+  --color-primary-dark: #12a38a;
+  --color-primary-light: #4de8cf;
+  
+  /* Background colors */
+  --color-background-light: #f6f8f8;
+  --color-background-dark: #11211e;
+  
+  /* Surface colors */
+  --color-surface-light: #ffffff;
+  --color-surface-dark: #1a2e2b;
+  
+  /* Muted Coral - Soft accent */
+  --color-coral: #d66a6a;
+  --color-coral-light: #e8a0a0;
+  --color-coral-dark: #b85555;
+  
+  /* Lavender - Secondary accent */
+  --color-lavender: #9d8bb7;
+  --color-lavender-light: #c5b8d9;
+  --color-lavender-dark: #7a6a94;
+  
+  /* Sage Green - Calm, growth */
+  --color-sage-50: #f0f7f4;
+  --color-sage-100: #e7f3eb;
+  --color-sage-200: #c5e2d0;
+  --color-sage-300: #9fccb2;
+  --color-sage-400: #6fae8c;
+  --color-sage-500: #4e9767;
+  --color-sage-600: #3d7a53;
+  --color-sage-700: #366948;
+  --color-sage-800: #2d5339;
+  --color-sage-900: #27452f;
+  
+  /* Soft Teal - Trust, health */
+  --color-teal-50: #f0f9f7;
+  --color-teal-100: #dcf0ed;
+  --color-teal-200: #bce2dc;
+  --color-teal-300: #8fccc4;
+  --color-teal-400: #5ab0a7;
+  --color-teal-500: #3f958c;
+  --color-teal-600: #317872;
+  --color-teal-700: #2a615d;
+  --color-teal-800: #264f4c;
+  --color-teal-900: #234240;
+  
+  /* Text colors */
+  --color-text-subtle: #93c8bf;
+  
+  /* Font families */
+  --font-family-display: "Inter", system-ui, sans-serif;
+  --font-family-sans: "Inter", system-ui, sans-serif;
+  
+  /* Border radius */
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+  --radius-3xl: 2.5rem;
+  
+  /* Box shadows */
+  --shadow-soft: 0 4px 20px -2px rgba(0, 0, 0, 0.1);
+  --shadow-glow: 0 0 15px rgba(23, 207, 176, 0.15);
+  --shadow-tactile: 0 4px 0 0 rgba(0,0,0,0.2);
+  --shadow-tactile-active: 0 1px 0 0 rgba(0,0,0,0.2) inset;
+  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+  
+  /* Animations */
+  --animate-fade-in: fadeIn 0.3s ease-in-out;
+  --animate-slide-up: slideUp 0.3s ease-out;
+  --animate-pulse-soft: pulseSoft 2s infinite;
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes slideUp {
+    from { transform: translateY(10px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  
+  @keyframes pulseSoft {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+}
+
+/* Custom base styles for Calm Tech design */
+@layer base {
+  /* Material Symbols Icon Styles */
+  .material-symbols-rounded {
+    font-family: 'Material Symbols Rounded';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: 'liga';
+  }
+
+  :root {
+    /* Light mode CSS variables */
+    --color-background: #f6f8f8;
+    --color-surface: #ffffff;
+    --color-text-primary: #1c1917;
+    --color-text-secondary: #57534e;
+    --color-text-muted: #78716c;
+    --color-border: #e7e5e4;
+  }
+
+  .dark {
+    /* Dark mode CSS variables */
+    --color-background: #11211e;
+    --color-surface: #1a2e2b;
+    --color-text-primary: #ffffff;
+    --color-text-secondary: #d6d3d1;
+    --color-text-muted: #93c8bf;
+    --color-border: rgba(255, 255, 255, 0.1);
+  }
+
+  html {
+    @apply antialiased;
+  }
+
+  body {
+    background-color: var(--color-background-light);
+    color: var(--color-text-primary);
+    font-family: var(--font-family-display);
+    @apply transition-colors duration-300;
+    min-height: 100dvh;
+  }
+  
+  .dark body {
+    background-color: var(--color-background-dark);
+    color: var(--color-text-primary);
+  }
+
+  /* Avoid pure white/black for neurodiversity */
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-stone-900;
+    @apply tracking-tight;
+  }
+  
+  .dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+    @apply text-white;
+  }
+
+  /* Focus states for accessibility */
+  *:focus-visible {
+    @apply outline-2 outline-offset-2 outline-primary;
+  }
+}
+
+@layer components {
+  /* Glass morphism panel */
+  .glass-panel {
+    background-color: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(231, 229, 228, 1);
+  }
+  
+  .dark .glass-panel {
+    background-color: rgba(21, 39, 36, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  /* Soft card style */
+  .card {
+    background-color: var(--color-surface-light);
+    @apply rounded-2xl shadow-soft;
+    border: 1px solid rgba(231, 229, 228, 1);
+  }
+  
+  .dark .card {
+    background-color: var(--color-surface-dark);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  /* Primary button */
+  .btn-primary {
+    background-color: var(--color-primary);
+    color: var(--color-background-dark);
+    @apply px-6 py-3 rounded-xl font-semibold;
+    box-shadow: var(--shadow-glow);
+    @apply active:scale-95 transition-all duration-200;
+  }
+  
+  .btn-primary:hover {
+    background-color: var(--color-primary-dark);
+  }
+
+  /* Secondary button */
+  .btn-secondary {
+    @apply bg-stone-100 text-stone-700;
+    @apply px-6 py-3 rounded-xl font-medium;
+    @apply hover:bg-stone-200;
+    @apply active:scale-95 transition-all duration-200;
+  }
+  
+  .dark .btn-secondary {
+    background-color: rgba(255, 255, 255, 0.05);
+    @apply text-stone-200;
+  }
+  
+  .dark .btn-secondary:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  /* Danger button */
+  .btn-danger {
+    background-color: var(--color-coral);
+    @apply text-white;
+    @apply px-6 py-3 rounded-xl font-semibold;
+    @apply active:scale-95 transition-all duration-200;
+  }
+  
+  .btn-danger:hover {
+    background-color: var(--color-coral-dark);
+  }
+
+  /* Icon button */
+  .btn-icon {
+    @apply flex items-center justify-center;
+    @apply h-10 w-10 rounded-full;
+    @apply bg-stone-100 text-stone-600;
+    @apply hover:bg-stone-200;
+    @apply active:scale-95 transition-all duration-200;
+  }
+  
+  .dark .btn-icon {
+    background-color: rgba(255, 255, 255, 0.05);
+    @apply text-stone-300;
+  }
+  
+  .dark .btn-icon:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  /* Form input */
+  .input {
+    @apply w-full rounded-lg;
+    @apply bg-white;
+    @apply border border-stone-200;
+    @apply px-4 py-3 text-sm;
+    @apply text-stone-900;
+    @apply placeholder:text-stone-400;
+    @apply focus:ring-2 focus:ring-primary focus:border-transparent;
+    @apply transition-all duration-200;
+  }
+  
+  .dark .input {
+    @apply bg-stone-900 border-stone-700 text-stone-100;
+  }
+
+  /* Form label */
+  .label {
+    @apply block text-sm font-medium;
+    @apply text-stone-700;
+    @apply mb-1.5;
+  }
+  
+  .dark .label {
+    @apply text-stone-300;
+  }
+
+  /* Badge/Chip */
+  .badge {
+    @apply inline-flex items-center;
+    @apply px-3 py-1 rounded-full;
+    @apply text-xs font-medium;
+    @apply bg-stone-100 text-stone-700;
+  }
+  
+  .dark .badge {
+    background-color: rgba(255, 255, 255, 0.1);
+    @apply text-stone-200;
+  }
+
+  .badge-primary {
+    background-color: rgba(23, 207, 176, 0.2);
+    color: var(--color-primary-dark);
+  }
+  
+  .dark .badge-primary {
+    color: var(--color-primary);
+  }
+
+  .badge-warning {
+    @apply bg-orange-100 text-orange-700;
+  }
+  
+  .dark .badge-warning {
+    background-color: rgba(249, 115, 22, 0.2);
+    @apply text-orange-300;
+  }
+
+  .badge-success {
+    background-color: var(--color-sage-100);
+    color: var(--color-sage-700);
+  }
+  
+  .dark .badge-success {
+    background-color: rgba(78, 151, 103, 0.2);
+    color: var(--color-sage-500);
+  }
+
+  /* Bottom navigation */
+  .bottom-nav {
+    @apply fixed bottom-0 left-0 right-0 z-50;
+    background-color: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(12px);
+    @apply border-t border-stone-200;
+    @apply pb-6 pt-2;
+  }
+  
+  .dark .bottom-nav {
+    background-color: rgba(21, 39, 36, 0.9);
+    @apply border-t border-white/5;
+  }
+
+  .nav-item {
+    @apply flex flex-col items-center justify-center gap-1;
+    @apply p-2 w-20;
+    @apply text-stone-400;
+    @apply transition-colors;
+  }
+  
+  .dark .nav-item {
+    @apply text-stone-500;
+  }
+  
+  .nav-item:hover {
+    color: var(--color-primary);
+  }
+
+  .nav-item.active {
+    color: var(--color-primary);
+  }
+}
+
+@layer utilities {
+  /* Hide scrollbar */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Material Symbols filled style */
+  .filled {
+    font-variation-settings: 'FILL' 1;
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* Safe area padding for mobile */
+  .safe-bottom {
+    padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+  }
+
+  .safe-top {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+}

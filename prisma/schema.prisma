@@ -1,0 +1,591 @@
+// AutiCare Database Schema
+// Prisma schema for PostgreSQL (Neon)
+// See: PRD.md for requirements
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================
+// USER & AUTHENTICATION
+// ============================================
+
+enum Role {
+  PARENT
+  CHILD
+  CLINICIAN
+  SUPPORT
+  ADMIN
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  passwordHash  String?
+  name          String
+  role          Role      @default(PARENT)
+  phone         String?
+  licenseNumber String?   // For clinicians/support professionals
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Auth.js relations
+  accounts Account[]
+  sessions Session[]
+
+  // Parent-specific relations
+  children           ChildProfile[]         @relation("ParentChildren")
+  childProfile       ChildProfile?          @relation("ChildUser") // If this user is a child
+  sentInvites        AccessInvite[]         @relation("InviteSender")
+  receivedInvites    AccessInvite[]         @relation("InviteRecipient")
+  accessGrants       ChildAccess[]          @relation("ProfessionalAccess")
+  accessRequests     AccessRequest[]        @relation("AccessRequests")
+  
+  // Professional notes
+  medicalNotes       MedicalNote[]
+  supportNotes       SupportNote[]
+  
+  // Messaging
+  sentMessages       Message[]              @relation("MessageSender")
+  threadParticipants ThreadParticipant[]
+  
+  // Video visits
+  hostedVisits       VideoVisit[]           @relation("VisitHost")
+  visitParticipants  VideoVisitParticipant[]
+  
+  // Audit
+  auditLogs          AuditLog[]
+  
+  // Questionnaire
+  questionnaireResponses QuestionnaireResponse[]
+  
+  // Health tracking
+  symptomLogs    SymptomLog[]   @relation("SymptomLogs")
+  prescriptions  Prescription[] @relation("Prescriptions")
+
+  @@index([email])
+  @@index([role])
+}
+
+// Auth.js required models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ============================================
+// CHILD PROFILE & ACCESS CONTROL
+// ============================================
+
+model ChildProfile {
+  id            String   @id @default(cuid())
+  name          String
+  preferredName String?  // Nickname or preferred name for the child
+  dateOfBirth   DateTime
+  userId        String?  @unique // Link to User account if child has their own login
+  timezone      String   @default("America/New_York")
+  notes         String?  @db.Text
+  parentId      String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user             User?                  @relation("ChildUser", fields: [userId], references: [id])
+  parent           User                   @relation("ParentChildren", fields: [parentId], references: [id], onDelete: Cascade)
+  accessList       ChildAccess[]
+  accessInvites    AccessInvite[]
+  accessRequests   AccessRequest[]
+  medicalNotes     MedicalNote[]
+  supportNotes     SupportNote[]
+  videoVisits      VideoVisit[]
+  messageThreads   MessageThread[]
+  gardenProgress   GardenProgress?
+  gameSessions     GameSession[]
+  questionnaireResponses QuestionnaireResponse[]
+  symptomLogs      SymptomLog[]
+  prescriptions    Prescription[]
+
+  @@index([parentId])
+}
+
+// Permission scopes for access control
+enum PermissionScope {
+  MEDICAL_NOTES
+  SUPPORT_NOTES
+  MESSAGES
+  VIDEO_VISITS
+}
+
+model ChildAccess {
+  id             String            @id @default(cuid())
+  childId        String
+  professionalId String
+  scopes         PermissionScope[]
+  grantedAt      DateTime          @default(now())
+  revokedAt      DateTime?
+  isActive       Boolean           @default(true)
+
+  child        ChildProfile @relation(fields: [childId], references: [id], onDelete: Cascade)
+  professional User         @relation("ProfessionalAccess", fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@unique([childId, professionalId])
+  @@index([childId])
+  @@index([professionalId])
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  DENIED
+  EXPIRED
+}
+
+model AccessInvite {
+  id             String            @id @default(cuid())
+  childId        String
+  senderId       String
+  recipientId    String?           // null if invited by email before account creation
+  recipientEmail String?
+  token          String            @unique @default(cuid())
+  scopes         PermissionScope[]
+  status         InviteStatus      @default(PENDING)
+  expiresAt      DateTime
+  createdAt      DateTime          @default(now())
+  respondedAt    DateTime?
+
+  child     ChildProfile @relation(fields: [childId], references: [id], onDelete: Cascade)
+  sender    User         @relation("InviteSender", fields: [senderId], references: [id], onDelete: Cascade)
+  recipient User?        @relation("InviteRecipient", fields: [recipientId], references: [id])
+
+  @@index([token])
+  @@index([recipientEmail])
+}
+
+// Professional-initiated access request (parent approves/denies)
+enum RequestStatus {
+  PENDING
+  APPROVED
+  DENIED
+}
+
+model AccessRequest {
+  id              String            @id @default(cuid())
+  childId         String
+  professionalId  String
+  requestedScopes PermissionScope[]
+  message         String?           @db.Text // Request reason/message
+  status          RequestStatus     @default(PENDING)
+  createdAt       DateTime          @default(now())
+  respondedAt     DateTime?
+  respondedBy     String?           // Parent who responded
+
+  child        ChildProfile @relation(fields: [childId], references: [id], onDelete: Cascade)
+  professional User         @relation("AccessRequests", fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@unique([childId, professionalId, status]) // Only one pending request per professional per child
+  @@index([childId])
+  @@index([professionalId])
+  @@index([status])
+}
+
+// ============================================
+// MEDICAL & SUPPORT NOTES
+// ============================================
+
+model MedicalNote {
+  id          String   @id @default(cuid())
+  childId     String
+  authorId    String
+  noteType    String   // 'anamnesis', 'visit', 'care_plan', 'medication'
+  
+  // SOAP structure
+  subjective  String?  @db.Text
+  objective   String?  @db.Text
+  assessment  String?  @db.Text
+  plan        String?  @db.Text
+  
+  // Additional fields
+  medications String?  @db.Text // JSON array of medications
+  vitals      String?  @db.Text // JSON object with vital signs
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  child  ChildProfile @relation(fields: [childId], references: [id], onDelete: Cascade)
+  author User         @relation(fields: [authorId], references: [id])
+
+  @@index([childId])
+  @@index([authorId])
+}
+
+model SupportNote {
+  id              String   @id @default(cuid())
+  childId         String
+  authorId        String
+  sessionSummary  String?  @db.Text
+  goals           String?  @db.Text
+  interventions   String?  @db.Text
+  observations    String?  @db.Text
+  progress        String?  @db.Text
+  homePractice    String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  child  ChildProfile @relation(fields: [childId], references: [id], onDelete: Cascade)
+  author User         @relation(fields: [authorId], references: [id])
+
+  @@index([childId])
+  @@index([authorId])
+}
+
+// ============================================
+// MESSAGING
+// ============================================
+
+model MessageThread {
+  id        String   @id @default(cuid())
+  childId   String?  // Optional: thread can be about a specific child
+  subject   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  child        ChildProfile?       @relation(fields: [childId], references: [id])
+  participants ThreadParticipant[]
+  messages     Message[]
+
+  @@index([childId])
+}
+
+model ThreadParticipant {
+  id        String   @id @default(cuid())
+  threadId  String
+  userId    String
+  joinedAt  DateTime @default(now())
+  lastReadAt DateTime?
+
+  thread MessageThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  user   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([threadId, userId])
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  threadId  String
+  senderId  String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  thread      MessageThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  sender      User          @relation("MessageSender", fields: [senderId], references: [id])
+  attachments Attachment[]
+
+  @@index([threadId])
+  @@index([senderId])
+}
+
+// ============================================
+// FILE ATTACHMENTS
+// ============================================
+
+model Attachment {
+  id          String   @id @default(cuid())
+  messageId   String
+  fileName    String
+  fileType    String   // MIME type
+  fileSize    Int      // Size in bytes
+  storagePath String   // Path in storage (e.g., S3 or local)
+  uploadedBy  String
+  createdAt   DateTime @default(now())
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+}
+
+// ============================================
+// VIDEO VISITS
+// ============================================
+
+enum VisitStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+model VideoVisit {
+  id           String      @id @default(cuid())
+  childId      String
+  hostId       String
+  title        String
+  reason       String?
+  roomName     String      @unique @default(cuid())
+  status       VisitStatus @default(SCHEDULED)
+  scheduledAt  DateTime?
+  startedAt    DateTime?
+  endedAt      DateTime?
+  notes        String?     @db.Text // Post-visit notes
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  child        ChildProfile            @relation(fields: [childId], references: [id], onDelete: Cascade)
+  host         User                    @relation("VisitHost", fields: [hostId], references: [id])
+  participants VideoVisitParticipant[]
+
+  @@index([childId])
+  @@index([hostId])
+  @@index([status])
+}
+
+model VideoVisitParticipant {
+  id        String    @id @default(cuid())
+  visitId   String
+  userId    String
+  joinedAt  DateTime?
+  leftAt    DateTime?
+  admitted  Boolean   @default(false) // Waiting room control
+
+  visit VideoVisit @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  user  User       @relation(fields: [userId], references: [id])
+
+  @@unique([visitId, userId])
+}
+
+// ============================================
+// CHILD AREA - GARDEN ACTIVITY
+// ============================================
+
+model GardenProgress {
+  id            String   @id @default(cuid())
+  childId       String   @unique
+  plantLevel    Int      @default(1)
+  growthPoints  Int      @default(0)
+  totalPoints   Int      @default(100) // Points needed to level up
+  lastWatered   DateTime?
+  lastSunlight  DateTime?
+  tasksCompleted Int     @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  child ChildProfile @relation(fields: [childId], references: [id], onDelete: Cascade)
+  tasks GardenTask[]
+}
+
+// ============================================
+// THERAPEUTIC GAMES (V1)
+// Games for cognitive/behavioral stimulation (non-diagnostic)
+// ============================================
+
+enum GameType {
+  EMOTION_MATCH     // Game 1: Emotion recognition
+  COLORS_SHAPES     // Game 2: Visual attention/categorization
+  ROUTINE_SEQUENCE  // Game 3: Organization/logical sequencing
+  SOUND_MATCH       // Game 4: Auditory perception
+  IMITATE_MOVE      // Game 5: Imitation and attention
+}
+
+model GameSession {
+  id              String    @id @default(cuid())
+  childId         String
+  gameType        GameType
+  attempts        Int       @default(0)    // Number of attempts
+  correctAnswers  Int       @default(0)    // Number of correct responses
+  duration        Int       @default(0)    // Duration in seconds
+  completed       Boolean   @default(false)
+  metadata        String?   @db.Text       // JSON for game-specific data (mode, difficulty, etc.)
+  playedAt        DateTime  @default(now())
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  child ChildProfile @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@index([childId])
+  @@index([gameType])
+  @@index([playedAt])
+}
+
+model GardenTask {
+  id          String    @id @default(cuid())
+  gardenId    String
+  taskType    String    // 'brush_teeth', 'drink_water', 'exercise', etc.
+  title       String
+  icon        String
+  points      Int       @default(10)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  garden GardenProgress @relation(fields: [gardenId], references: [id], onDelete: Cascade)
+
+  @@index([gardenId])
+}
+
+// ============================================
+// PARENT AREA - QUESTIONNAIRE
+// ============================================
+
+model QuestionnaireResponse {
+  id           String   @id @default(cuid())
+  childId      String
+  responderId  String
+  responses    String   @db.Text // JSON array of answers
+  score        Int?
+  result       String?  // Informational result
+  sharedWith   String[] // Array of user IDs who can view
+  createdAt    DateTime @default(now())
+
+  child     ChildProfile @relation(fields: [childId], references: [id], onDelete: Cascade)
+  responder User         @relation(fields: [responderId], references: [id])
+
+  @@index([childId])
+}
+
+// ============================================
+// SYMPTOM LOGS & PRESCRIPTIONS
+// ============================================
+
+enum SymptomSeverity {
+  MILD
+  MODERATE
+  SEVERE
+}
+
+model SymptomLog {
+  id          String           @id @default(cuid())
+  childId     String
+  loggedById  String
+  symptomType String           // 'meltdown', 'sleep_issue', 'digestive', 'sensory', etc.
+  severity    SymptomSeverity  @default(MILD)
+  notes       String?          @db.Text
+  triggers    String[]         // Array of potential triggers
+  duration    Int?             // Duration in minutes
+  occurredAt  DateTime         @default(now())
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  child    ChildProfile @relation(fields: [childId], references: [id], onDelete: Cascade)
+  loggedBy User         @relation("SymptomLogs", fields: [loggedById], references: [id])
+
+  @@index([childId])
+  @@index([occurredAt])
+}
+
+enum PrescriptionStatus {
+  ACTIVE
+  PAUSED
+  DISCONTINUED
+  COMPLETED
+}
+
+model Prescription {
+  id              String             @id @default(cuid())
+  childId         String
+  addedById       String
+  name            String             // Medication name
+  dosage          String             // e.g., "5mg"
+  frequency       String             // e.g., "twice daily"
+  instructions    String?            @db.Text
+  prescribedBy    String?            // Doctor's name
+  pharmacy        String?
+  status          PrescriptionStatus @default(ACTIVE)
+  startDate       DateTime?
+  endDate         DateTime?
+  refillDate      DateTime?
+  sideEffectsNoted String?           @db.Text
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  child   ChildProfile @relation(fields: [childId], references: [id], onDelete: Cascade)
+  addedBy User         @relation("Prescriptions", fields: [addedById], references: [id])
+
+  @@index([childId])
+  @@index([status])
+}
+
+// ============================================
+// AUDIT LOGGING
+// ============================================
+
+enum AuditAction {
+  // Access control
+  ACCESS_GRANTED
+  ACCESS_REVOKED
+  ACCESS_REQUESTED
+  ACCESS_INVITED
+  INVITE_SENT
+  INVITE_ACCEPTED
+  INVITE_DENIED
+  
+  // Records
+  RECORD_CREATED
+  RECORD_VIEWED
+  RECORD_UPDATED
+  RECORD_DELETED
+  NOTE_CREATED
+  NOTE_UPDATED
+  NOTE_DELETED
+  
+  // Video
+  VIDEO_SESSION_CREATED
+  VIDEO_SESSION_JOINED
+  VIDEO_SESSION_ENDED
+  
+  // Auth
+  USER_LOGIN
+  USER_LOGOUT
+  PASSWORD_RESET
+}
+
+model AuditLog {
+  id          String      @id @default(cuid())
+  userId      String
+  action      AuditAction
+  targetType  String?     // 'ChildProfile', 'MedicalNote', etc.
+  targetId    String?
+  metadata    String?     @db.Text // JSON additional data
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime    @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+}
