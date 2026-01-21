@@ -95,6 +95,12 @@
 
 /* Custom base styles for Calm Tech design */
 @layer base {
+  /* Tailwind v4 fix: Restore pointer cursor on buttons */
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
   /* Material Symbols Icon Styles */
   .material-symbols-rounded {
     font-family: 'Material Symbols Rounded';
@@ -194,6 +200,7 @@
 
   /* Primary button */
   .btn-primary {
+    @apply inline-flex items-center justify-center;
     background-color: var(--color-primary);
     color: var(--color-background-dark);
     @apply px-6 py-3 rounded-xl font-semibold;
@@ -207,6 +214,7 @@
 
   /* Secondary button */
   .btn-secondary {
+    @apply inline-flex items-center justify-center;
     @apply bg-stone-100 text-stone-700;
     @apply px-6 py-3 rounded-xl font-medium;
     @apply hover:bg-stone-200;
@@ -224,6 +232,7 @@
 
   /* Danger button */
   .btn-danger {
+    @apply inline-flex items-center justify-center;
     background-color: var(--color-coral);
     @apply text-white;
     @apply px-6 py-3 rounded-xl font-semibold;
@@ -253,7 +262,8 @@
   }
 
   /* Form input */
-  .input {
+  .input,
+  .input-field {
     @apply w-full rounded-lg;
     @apply bg-white;
     @apply border border-stone-200;
@@ -264,7 +274,8 @@
     @apply transition-all duration-200;
   }
   
-  .dark .input {
+  .dark .input,
+  .dark .input-field {
     @apply bg-stone-900 border-stone-700 text-stone-100;
   }
 
