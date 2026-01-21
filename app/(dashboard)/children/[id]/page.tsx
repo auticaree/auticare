@@ -373,7 +373,7 @@ export default async function ChildProfilePage({ params }: PageProps) {
                 </span>
               </Link>
               <Link
-                href={`/visits/schedule?child=${id}`}
+                href={`/video/schedule?child=${id}`}
                 className="flex items-center p-3 rounded-xl bg-sage-50 dark:bg-sage-800/50 hover:bg-sage-100 dark:hover:bg-sage-800 transition-colors"
               >
                 <span className="material-symbols-rounded text-lavender-500 mr-3">

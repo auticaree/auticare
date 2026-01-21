@@ -48,10 +48,8 @@ export default function DashboardLayout({
         <div className="flex items-center justify-between h-16 px-4">
           {/* Logo */}
           <Link href="/dashboard" className="flex items-center space-x-2">
-            <div className="w-9 h-9 rounded-xl bg-linear-to-br from-primary-400 to-teal-500 flex items-center justify-center shadow-glow">
-              <span className="material-symbols-rounded text-white text-lg">
-                psychiatry
-              </span>
+            <div className="w-9 h-9 rounded-xl overflow-hidden shadow-glow">
+              <img src="/logo.jpeg" alt="AutiCare" className="w-full h-full object-cover" />
             </div>
             <span className="text-lg font-semibold text-sage-900 dark:text-white hidden sm:block">
               AutiCare

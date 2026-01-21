@@ -157,7 +157,7 @@ export default async function DashboardPage() {
             Visits
           </p>
           <Link
-            href="/visits"
+            href="/video"
             className="text-sm text-primary-600 dark:text-primary-400 hover:underline mt-1 inline-block"
           >
             Schedule →
@@ -243,7 +243,7 @@ export default async function DashboardPage() {
                 Upcoming Visits
               </h2>
               <Link
-                href="/visits"
+                href="/video"
                 className="text-sm text-primary-600 dark:text-primary-400 hover:underline"
               >
                 View all
@@ -281,7 +281,7 @@ export default async function DashboardPage() {
                         </div>
                       </div>
                       <Link
-                        href={`/visits/${visit.id}`}
+                        href={`/video/${visit.id}`}
                         className="btn-secondary text-sm py-2 px-3"
                       >
                         Join
@@ -298,7 +298,7 @@ export default async function DashboardPage() {
                     No upcoming visits scheduled
                   </p>
                   <Link
-                    href="/visits/schedule"
+                    href="/video/schedule"
                     className="btn-primary mt-4 inline-flex"
                   >
                     <span className="material-symbols-rounded mr-2">add</span>
@@ -465,7 +465,7 @@ export default async function DashboardPage() {
                 </span>
               </Link>
               <Link
-                href="/visits/schedule"
+                href="/video/schedule"
                 className="flex items-center p-3 rounded-xl bg-sage-50 dark:bg-sage-800/50 hover:bg-sage-100 dark:hover:bg-sage-800 transition-colors"
               >
                 <span className="material-symbols-rounded text-coral-500 mr-3">

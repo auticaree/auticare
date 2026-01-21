@@ -162,10 +162,8 @@ function ResetPasswordForm() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center space-x-2">
-            <div className="w-10 h-10 rounded-xl bg-linear-to-br from-primary-400 to-teal-500 flex items-center justify-center shadow-glow">
-              <span className="material-symbols-rounded text-white text-xl">
-                psychiatry
-              </span>
+            <div className="w-10 h-10 rounded-xl overflow-hidden shadow-glow">
+              <img src="/logo.jpeg" alt="AutiCare" className="w-full h-full object-cover" />
             </div>
             <span className="text-xl font-semibold text-sage-900 dark:text-white">
               AutiCare
